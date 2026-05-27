@@ -1,0 +1,34 @@
+# 超大文件 - 超过 GitHub 100MB 限制
+Project_Work_FSxPOLIMI_March2026 (1).zip
+
+# 超大 CSV 数据文件 (>100MB, GitHub 不允许)
+**/OD-3000-zone-202410-matrice-fondamentale.csv
+**/OD-3000-zone_202410-matrice-integrativa.csv
+
+# Excel 临时锁定文件
+~$*.xlsx
+~$*.xls
+~$*.docx
+~$*.doc
+~$*.pptx
+
+# Windows 系统文件
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+
+# IDE / 编辑器
+.idea/
+*.suo
+*.user
+
+# Claude Code 内部配置（不需要上传）
+.claude/

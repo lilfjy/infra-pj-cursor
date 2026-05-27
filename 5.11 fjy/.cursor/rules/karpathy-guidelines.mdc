@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+---
+# Karpathy Behavioral Guidelines
+
+These guidelines help LLMs avoid common coding mistakes by emphasizing deliberation, simplicity, precision, and verification.
+
+## Key Principles
+
+**Think Before Coding:** "State your assumptions explicitly. If uncertain, ask." Surface confusion and tradeoffs rather than making silent choices.
+
+**Simplicity First:** Write minimal code solving only the stated problem. As the guidelines note, "If you write 200 lines and it could be 50, rewrite it." Avoid speculative features or premature abstractions.
+
+**Surgical Changes:** When editing code, "Don't 'improve' adjacent code, comments, or formatting." Only remove code your changes made unnecessary; don't clean up pre-existing issues unless requested.
+
+**Goal-Driven Execution:** Transform vague tasks into verifiable criteria with explicit steps and checks before implementation completes.
+
+## Why This Matters
+
+These behavioral guidelines work when they produce fewer unnecessary changes, prevent rewrites from overcomplication, and encourage clarifying questions before coding rather than after mistakes occur.
