@@ -132,6 +132,12 @@
 - 脚本：`B_capacity_analysis.py`(容量V/C) + `B_accessibility_osrm.py`(可达性)
 - 4 图(`output_charts/`，英文可直接进 report)：`B_chart_VC_by_line.png`(逐线V/C柱状) · `B_map_saturation.png`(饱和地图) · `B_chart_sensitivity.png`(40/50/60%敏感性折线，L1 在60%穿1.0) · `B_map_accessibility_osrm.png`(可达性等时圈地图)
 - 文字：`B_methodology_results.md`(英文方法论+结论，可直接进report) + `B_答辩话术.md`(答辩Q&A，含教授追问标准答法)
+- **可合并文档**：`PartB_section.docx`(带格式+内嵌4图，进 INFRA.docx) + `PartB_slides.pptx`(3页16:9，含演讲备注=话术)
+- **面状图(shapefile choropleth，比散点专业，脚本 `B_maps_shapefile.py`)**：
+  - `B_map_saturation_shapefile.png`(按**绝对游客到达增量**上色，中心区深红) · `B_map_accessibility_shapefile.png`(路网车程渐变)
+  - shapefile 在 `Project_Work.../Shapefile/Campania.shp`(222区,WGS84,**记录顺序=分区NO顺序**,area_id 直接对位)
+  - ⚠️ **数据质量发现**：按"增长%"上色会被**低基数农村区**(如 Greci +1031%)污染成假热点 → 改用**绝对增量**才诚实；真正瓶颈=中心高量区(+25~50%)。答辩可主动提这点。
+  - **Visum 桥梁**：`B_zone_metrics.csv`(NO/AREA_ID/tourist_in/background_in/growth_pct/access_min) → 导入 Visum 按 area_id join 到 zone 层即可上色精修
 - **分工边界**：B 只做"诊断"(哪堵/为何堵)；"开方"(增 shuttle bus)是苏艳婷的 Services improvement 部分
 
 ## 当前进度
