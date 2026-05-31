@@ -123,9 +123,16 @@
 **🎯 核心结论（答辩主线）**：瓶颈**不在赛场**——Bagnoli/Fuorigrotta 有 3 条线富余(V/C~0.35~0.62)；问题是**运力分布错位**，集中在 **L1 中心主干 + Napoli Centrale 门户**。即"**distribution 问题，非 capacity 问题**"→ 对策=L1 加密班次 + 用 L6(Municipio↔Mostra)分流，而非修新线（顺接 Step 3）。
 **诚实caveat**：绝对 V/C 依赖分担率/高峰假设；"崩溃"在 50% 分担率下是 L1≈0.84(临界)、60% 才破1.0。稳健说法="L1 是 binding constraint，已无冗余"，而非"全面崩溃"。
 
-**产出图**（`5.11 fjy/output_charts/`，英文，可直接进 report）：
-- `B_chart_VC_by_line.png` 逐线路 V/C 柱状图（含 V/C=1.0 红线）
-- `B_map_saturation.png` 饱和度地图（中心红=饱和 / 西部绿=富余，泡大小∝游客增量）
+**B 的第二维度 — OSRM 真实路网可达性**（脚本 `B_accessibility_osrm.py`）：
+- ⚠️ **用 `distance_real_v2.mtx`（完整 222×222，单位=分钟）**；`distance_real.mtx`(v1) **残缺只算了 22/222 起点，勿用**
+- 算各区到最近赛场(zone 3/10)的开车分钟 → 等时圈地图 + 游客来源叠加
+- 发现：**73% 的(Campania内)游客需求在 45 分钟车程内**(加权均 37min)→ 那不勒斯中心集中，印证 L1 走廊压力；**~20% 来自 >60min 远郊**(Salerno/Cilento)，靠长途公路+区域铁路
+
+**全部产出**（`5.11 fjy/`）：
+- 脚本：`B_capacity_analysis.py`(容量V/C) + `B_accessibility_osrm.py`(可达性)
+- 4 图(`output_charts/`，英文可直接进 report)：`B_chart_VC_by_line.png`(逐线V/C柱状) · `B_map_saturation.png`(饱和地图) · `B_chart_sensitivity.png`(40/50/60%敏感性折线，L1 在60%穿1.0) · `B_map_accessibility_osrm.png`(可达性等时圈地图)
+- 文字：`B_methodology_results.md`(英文方法论+结论，可直接进report) + `B_答辩话术.md`(答辩Q&A，含教授追问标准答法)
+- **分工边界**：B 只做"诊断"(哪堵/为何堵)；"开方"(增 shuttle bus)是苏艳婷的 Services improvement 部分
 
 ## 当前进度
 
@@ -143,6 +150,7 @@
 - [x] **拿到并解析李兆杰的需求矩阵**（Tourist_AGGREGATE + TOTAL_flow）→ 验证全区域+11%、7区+20.6%、定位瓶颈在 Napoli Centrale（详见上节）
 - [x] **As-is 数据完整盘点**（时段/星期/居住地/国籍/方式/掩码，详见「As-is 数据盘点」节）→ 发现交通方式数据不能直接推公交分担率
 - [x] **B 分析跑通**：补入 zone 2/33；走廊级+逐线路两套 V/C；出 2 张图；核心结论=L1 binding constraint（详见「⭐ B 分析结果」节）
+- [x] **B Part 完整化（06-01）**：+OSRM 可达性维度(图4)+敏感性图(图3)+英文方法论文档+答辩话术 → Part B 现为 2脚本+4图+2文档
 
 ### 🔍 对李兆杰需求分配的核验结论（B 的输入）
 - ✅ 框架合理(重力+POI)、β=0.04 正常、中心滨海(Castel dell'Ovo)+Napoli Centrale+Bagnoli 覆盖到位
@@ -152,12 +160,11 @@
 - 🔴 他的分配**无分时段** → B 必须自己补高峰小时系数；外部 30万 是纯 POI 权重(无距离)，对走廊负荷指示性弱
 
 ### 📌 下一步起点
-B 的核心分析+图已完成。剩余可选项：
-1. **写 B 的方法论文字 / report 段落**（把假设、两套口径、L1 binding constraint 结论、distribution-not-capacity 论点整理成可直接进 report 的英文）
-2. （可选）确认李兆杰矩阵单位=月（基本已定）、"40%"口径——锦上添花，不卡进度
-3. （可选）接 Step 3：基于 L1 瓶颈给具体增能方案（L1 加密、L6 分流），但注意 shuttle bus 是苏艳婷的
-4. （可选）把 B 结果做成答辩 slide / 更新 `INFRA.docx` 的 Highlights+Services improvement
-- ✅ **05-31 进展**：B 跑通（脚本+2图+CLAUDE.md 记录齐全）。下次可直接写 report 文字或做 slide。
+**Part B 已基本完整**（2脚本+4图+方法论文档+答辩话术）。剩余可选项：
+1. 把 `B_methodology_results.md` 的英文段落**粘进小组 report `INFRA.docx`**（Highlights / Services improvement 前的诊断部分）
+2. 把 4 张图 + 核心结论做成 **2–3 页答辩 slide**（话术已备在 `B_答辩话术.md`）
+3. （可选，锦上添花）顺口找李兆杰确认矩阵单位=月、"40%"口径
+- ✅ **06-01 进展**：Part B 完整化收尾。内容/包装/独家资产(OSRM)都到位，三人里方法最完整。
 
 ## 工作习惯
 

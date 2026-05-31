@@ -190,4 +190,31 @@ ax.set_xlim(14.0, 14.45); ax.set_ylim(40.75, 40.95)   # zoom Naples
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_map_saturation.png"), dpi=150, bbox_inches="tight")
 plt.close(); print(f"  ✓ 图2 saved: output_charts/B_map_saturation.png")
 
+# ══════════════════════════════════════════════════════
+# 图 3 —— 敏感性: 逐线路 赛事 V/C vs 轨道分担率
+# ══════════════════════════════════════════════════════
+shares = np.array(SENS_SHARES)
+fig, ax = plt.subplots(figsize=(9, 5.5))
+colors = {"L1": "#C0392B", "L6": "#2980B9", "L2": "#27AE60", "Cumana": "#8E44AD"}
+for l in ["L1", "L6", "L2", "Cumana"]:
+    ys = []
+    for s in shares:
+        lo = sum((inbound(B, no) + inbound(T, no)) / DAYS_PER_MONTH * PEAK_HOUR_FRAC * s
+                 * (CAP[l] / sum(CAP[k] for k in ln))
+                 for no, ln in ZONE_LINES.items() if l in ln)
+        ys.append(lo / CAP[l])
+    ax.plot(shares * 100, ys, "o-", color=colors[l], lw=2, markersize=7,
+            label=f"Metro {l}" if l.startswith("L") else l)
+    ax.annotate(f"{ys[-1]:.2f}", (shares[-1]*100, ys[-1]), xytext=(6, 0),
+                textcoords="offset points", fontsize=9, color=colors[l], va="center")
+ax.axhline(1.0, color="#C0392B", ls="--", lw=1.5)
+ax.text(40, 1.02, "V/C = 1.0  collapse threshold", color="#C0392B", fontsize=9)
+ax.set_xlabel("Assumed public-transit mode share (%)")
+ax.set_ylabel("Event V/C ratio (peak hour, per direction)")
+ax.set_title("Sensitivity of saturation to transit mode share\nAmerica's Cup 2027, Naples — rail lines",
+             fontweight="bold")
+ax.set_xticks([40, 50, 60]); ax.legend(); ax.grid(alpha=0.3)
+plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_chart_sensitivity.png"), dpi=150, bbox_inches="tight")
+plt.close(); print(f"  ✓ 图3 saved: output_charts/B_chart_sensitivity.png")
+
 print("\n注: 🟢可承接 🟠临界(>.85) 🔴崩溃(>1.0) · V/C绝对值依赖分担率假设,相对增量稳健 · 图为英文(report用)")
