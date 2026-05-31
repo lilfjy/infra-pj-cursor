@@ -166,12 +166,12 @@
 - ⚠️ **zone 73(Nocera, 30km外)是离群点** → 待问李兆杰为何选它
 - 🔴 他的分配**无分时段** → B 必须自己补高峰小时系数；外部 30万 是纯 POI 权重(无距离)，对走廊负荷指示性弱
 
-### 📌 下一步起点
-**Part B 已基本完整**（2脚本+4图+方法论文档+答辩话术）。剩余可选项：
-1. 把 `B_methodology_results.md` 的英文段落**粘进小组 report `INFRA.docx`**（Highlights / Services improvement 前的诊断部分）
-2. 把 4 张图 + 核心结论做成 **2–3 页答辩 slide**（话术已备在 `B_答辩话术.md`）
-3. （可选，锦上添花）顺口找李兆杰确认矩阵单位=月、"40%"口径
-- ✅ **06-01 进展**：Part B 完整化收尾。内容/包装/独家资产(OSRM)都到位，三人里方法最完整。
+### 📌 下一步起点（明天 06-02）
+**Part B 全部完成 + QA 通过**（2脚本+4图+方法论+答辩+docx+pptx，内部全一致）。明天要做：
+1. **用户仔细看报告 + 问问题** —— 用户会逐段审 `PartB_section.docx`/`B_methodology_results.md`，可能就方法/数字/措辞提问，按需调整
+2. **导入 Visum** —— 用户拿 `B_zone_metrics.csv`（NO/AREA_ID/tourist_in/background_in/growth_pct/access_min）导进 Visum，按 area_id join 到 zone 层做精细面状图。⚠️ 着色用**绝对量(tourist_in)**别用 growth_pct(低基数农村区会假高)
+3. （仍可选）把 `PartB_section.docx` 内容并进小组 report；找李兆杰确认矩阵单位=月
+- ✅ **06-01 收尾**：Part B 完整化 + QA 修正全部 commit&push 到 GitHub（最新 `d5cff37`）。
 
 ## 工作习惯
 
