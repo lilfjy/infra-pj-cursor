@@ -79,7 +79,7 @@ def peak_transit(monthly):      # 月 -> 高峰小时单向轨道需求
     return monthly / DAYS_PER_MONTH * PEAK_HOUR_FRAC * TRANSIT_SHARE
 
 def los(vc):
-    return ("A-C ok" if vc < .60 else "D busy" if vc < .85
+    return ("A-C ok" if vc < .60 else "D busy" if vc < .80
             else "E near-cap" if vc < 1 else "F OVERSATURATED")
 
 # ══════════════════════════════════════════════════════
@@ -96,7 +96,7 @@ for cn, (zs, lines) in CORR.items():
     bg = sum(inbound(B, n) for n in zs); tr = sum(inbound(T, n) for n in zs)
     cap = sum(CAP[l] for l in lines)
     vb, ve = peak_transit(bg) / cap, peak_transit(bg + tr) / cap
-    flag = "🔴崩溃" if ve > 1 else "🟠临界" if ve > .85 else "🟢可承接"
+    flag = "🔴崩溃" if ve > 1 else "🟠临界" if ve > .80 else "🟢可承接"
     print(f"  {cn}")
     print(f"    线路 {'+'.join(lines)} 运力={cap:,}/h | 月到达 背景{bg:,.0f}+游客{tr:,.0f}(+{tr/bg*100:.0f}%)")
     print(f"    V/C 现状 {vb:.2f} -> 赛事 {ve:.2f}  {flag}")
@@ -120,7 +120,7 @@ line_rows = []
 print(f"  {'线路':6} {'运力/h':>8} {'现状负荷':>9} {'赛事负荷':>9} {'现状V/C':>8} {'赛事V/C':>8}  判定")
 for l in ["L1", "L6", "L2", "Cumana"]:
     vb, ve = load_bg[l] / CAP[l], load_ev[l] / CAP[l]
-    flag = "🔴" if ve > 1 else "🟠" if ve > .85 else "🟢"
+    flag = "🔴" if ve > 1 else "🟠" if ve > .80 else "🟢"
     print(f"  {l:6} {CAP[l]:>8,} {load_bg[l]:>9,.0f} {load_ev[l]:>9,.0f} {vb:>8.2f} {ve:>8.2f}  {flag} {los(ve)}")
     line_rows.append((l, vb, ve))
 
@@ -139,7 +139,7 @@ for l in ["L1", "L6", "L2", "Cumana"]:
                 m = inbound(B, no) + inbound(T, no)
                 lo += m / DAYS_PER_MONTH * PEAK_HOUR_FRAC * s * (CAP[l] / capsum)
         vc = lo / CAP[l]
-        cells += (f"{vc:.2f}" + ("🔴" if vc > 1 else "🟠" if vc > .85 else "🟢")).rjust(9)
+        cells += (f"{vc:.2f}" + ("🔴" if vc > 1 else "🟠" if vc > .80 else "🟢")).rjust(9)
     print(f"  {l:6}{cells}")
 
 # ══════════════════════════════════════════════════════
@@ -148,10 +148,11 @@ for l in ["L1", "L6", "L2", "Cumana"]:
 lines = [r[0] for r in line_rows]
 vb = [r[1] for r in line_rows]; ve = [r[2] for r in line_rows]
 x = np.arange(len(lines)); w = 0.38
+import matplotlib.patches as mpatches
 fig, ax = plt.subplots(figsize=(9, 5.5))
-ax.bar(x - w/2, vb, w, label="Baseline (As-is)", color="#7FB3D5")
-ax.bar(x + w/2, ve, w, label="Event (America's Cup)",
-       color=["#C0392B" if v > 1 else "#E67E22" if v > .85 else "#27AE60" for v in ve])
+ax.bar(x - w/2, vb, w, color="#7FB3D5")
+ax.bar(x + w/2, ve, w,
+       color=["#C0392B" if v > 1 else "#E67E22" if v > .80 else "#27AE60" for v in ve])
 ax.axhline(1.0, color="#C0392B", ls="--", lw=1.5)
 ax.text(len(lines)-0.5, 1.02, "V/C = 1.0  collapse", color="#C0392B", fontsize=9, ha="right")
 for i, v in enumerate(ve):
@@ -160,7 +161,13 @@ ax.set_xticks(x); ax.set_xticklabels([f"Metro {l}" if l.startswith("L") else l f
 ax.set_ylabel("V/C ratio (peak hour, per direction)")
 ax.set_title("Peak-hour saturation by rail line — Naples\nAmerica's Cup 2027 (transit share 50%)",
              fontweight="bold")
-ax.legend(); ax.set_ylim(0, max(ve) * 1.25)
+ax.legend(handles=[
+    mpatches.Patch(color="#7FB3D5", label="Baseline (As-is)"),
+    mpatches.Patch(color="#27AE60", label="Event — within capacity (<0.80)"),
+    mpatches.Patch(color="#E67E22", label="Event — near capacity (0.80–1.0)"),
+    mpatches.Patch(color="#C0392B", label="Event — oversaturated (>1.0)"),
+], fontsize=9)
+ax.set_ylim(0, max(ve) * 1.25)
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_chart_VC_by_line.png"), dpi=150, bbox_inches="tight")
 plt.close(); print(f"\n  ✓ 图1 saved: output_charts/B_chart_VC_by_line.png")
 
@@ -217,4 +224,4 @@ ax.set_xticks([40, 50, 60]); ax.legend(); ax.grid(alpha=0.3)
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_chart_sensitivity.png"), dpi=150, bbox_inches="tight")
 plt.close(); print(f"  ✓ 图3 saved: output_charts/B_chart_sensitivity.png")
 
-print("\n注: 🟢可承接 🟠临界(>.85) 🔴崩溃(>1.0) · V/C绝对值依赖分担率假设,相对增量稳健 · 图为英文(report用)")
+print("\n注: 🟢可承接 🟠临界(>.80) 🔴崩溃(>1.0) · V/C绝对值依赖分担率假设,相对增量稳健 · 图为英文(report用)")

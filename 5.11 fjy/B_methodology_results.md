@@ -57,9 +57,11 @@ carries 21.8 % of daily trips over 4 h (≈5.5 %/h), scaled by a within-peak pea
 (~1.4) → ≈8 %. Transit mode share is an assumption (the mobile-phone data only labels
 train/air, so urban metro is not observable) and is tested at 40/50/60 %.
 
-**Saturation:** `V/C = peak-hour rail demand / line capacity`, classified with a standard
-level-of-service scale (A–C < 0.60 free; D 0.60–0.85 busy; E 0.85–1.0 near-capacity;
-**F > 1.0 oversaturated / "collapse"**).
+**Saturation:** `V/C = peak-hour rail demand / line capacity`, classified with a
+level-of-service scale (A–C < 0.60 free; D 0.60–0.80 busy; E 0.80–1.0 near-capacity;
+**F > 1.0 oversaturated / "collapse"**). We treat 0.80 as the practical near-capacity
+threshold for peak rail loading (beyond ~80% load factor, crowding and reliability degrade
+and there is no recovery margin).
 
 Two calibers are reported: (1) **corridor-level**, and (2) **per-line**, in which each
 zone's demand is split across its serving lines in proportion to capacity (avoids
@@ -80,11 +82,14 @@ arbitrarily assigning shared lines to one corridor).
 at 50 % it reaches 0.84; **at 60 % it crosses 1.01 (oversaturated)**. All other lines stay
 below 0.75 across the full range. L1 is the only line at risk.
 
-**Spatial pattern** — *Fig. `B_map_saturation.png`*: the load is highly uneven. The race
-venue itself (West) is served by three lines and keeps V/C ≈ 0.35; the saturation
-concentrates on the central spine and the Napoli Centrale gateway.
+**Spatial pattern** — *Fig. `B_map_saturation_shapefile.png`* (choropleth on real zone
+boundaries): the added demand is highly uneven — it concentrates on central Naples and the
+Napoli Centrale gateway, while the race venue (Bagnoli/Fuorigrotta) absorbs a much smaller
+absolute increment, consistent with the line-level finding that L1 is the binding constraint.
+*(We map the absolute increment, not growth-%: low-baseline rural zones produce extreme
+percentages off tiny volumes and would be misleading hotspots.)*
 
-**Road accessibility (OSRM)** — *Fig. `B_map_accessibility_osrm.png`*: of the tourist
+**Road accessibility (OSRM)** — *Fig. `B_map_accessibility_shapefile.png`*: of the tourist
 demand originating within Campania, **73 % is within a 45-minute drive** of the venues
 (weighted-mean 37 min), confirming a Naples-centred concentration; but **~20 % originates
 beyond 60 minutes** (Salerno/Avellino/Cilento), which depends on long road approaches and
