@@ -134,6 +134,7 @@
 - 文字：`B_methodology_results.md`(英文方法论+结论，可直接进report) + `B_答辩话术.md`(答辩Q&A，含教授追问标准答法)
 - **可合并文档**：`PartB_section.docx`(带格式+内嵌4图，进 INFRA.docx) + `PartB_slides.pptx`(3页16:9，含演讲备注=话术)
 - **面状图(shapefile choropleth，比散点专业，脚本 `B_maps_shapefile.py`)**：
+  - **`B_map_venues_rail_schematic.png`**（报告主图：赛场★ + L1/L2/L6/Cumana 示意线 + 各线 Event V/C 标注）
   - `B_map_saturation_shapefile.png`(按**绝对游客到达增量**上色，中心区深红) · `B_map_accessibility_shapefile.png`(路网车程渐变)
   - shapefile 在 `Project_Work.../Shapefile/Campania.shp`(222区,WGS84,**记录顺序=分区NO顺序**,area_id 直接对位)
   - ⚠️ **数据质量发现**：按"增长%"上色会被**低基数农村区**(如 Greci +1031%)污染成假热点 → 改用**绝对增量**才诚实；真正瓶颈=中心高量区(+25~50%)。答辩可主动提这点。

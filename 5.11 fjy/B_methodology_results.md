@@ -69,6 +69,13 @@ arbitrarily assigning shared lines to one corridor).
 
 ## 5. Results
 
+**Spatial overview — venues & rail lines** — *Fig. `B_map_venues_rail_schematic.png`*:
+schematic map of the Gulf of Naples with the three event anchors (Bagnoli venue, Race
+Village, Napoli Centrale gateway), the western interchange (Fuorigrotta/Mostra), and the
+four analysed rail corridors (Metro L1, L6, L2, Cumana) colour-coded by **event V/C**
+(peak hour, 50 % transit share). Line geometry follows major stations (illustrative, not
+official track GIS).
+
 **Per-line V/C (transit share 50 %)** — *Fig. `B_chart_VC_by_line.png`*
 
 | Line | Baseline V/C | Event V/C | LOS |
