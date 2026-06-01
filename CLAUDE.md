@@ -143,7 +143,7 @@
 
 ## 当前进度
 
-> 📅 **最后更新：2026-05-31**
+> 📅 **最后更新：2026-06-01**
 
 ### ✅ 已完成
 - [x] 项目初始化，数据文件整理
@@ -159,6 +159,7 @@
 - [x] **B 分析跑通**：补入 zone 2/33；走廊级+逐线路两套 V/C；出 2 张图；核心结论=L1 binding constraint（详见「⭐ B 分析结果」节）
 - [x] **B Part 完整化（06-01）**：+OSRM 可达性维度(图4)+敏感性图(图3)+英文方法论文档+答辩话术 → Part B 现为 2脚本+4图+2文档
 - [x] **QA 修正（06-01）**：LOS 近满载阈值统一为 **0.80**(故 L1 0.84=E 与文档一致)；VC柱状图 L1 改橙色+状态色图例；docx/pptx 换用面状图并重嵌新柱状图；方法论 .md 图引用改面状图+加 growth%噪声说明
+- [x] **总览图地理化升级（06-01，commit `a2b0aba`）**：`B_map_venues_rail_schematic.png` 从空白散点底图 → **真实官方 Campania shapefile 分区边界**(浅蓝海湾背景+9个赛事区高亮)，叠赛场★/西部枢纽◆/4条轨道线(按event V/C上色)+V/C标注；标签独立偏移+引线(解决 L1/L6 共端点 14.240,40.836 重叠)；同步重嵌进 `PartB_section.docx`(Results 首图 Fig.1，原4图顺延 Fig.2-5)+`PartB_slides.pptx`(slide0 替换原V/C柱状图)+`B_methodology_results.md`(Results 开头加 Spatial overview 引用)。三处图片 hash 校验一致(`534b97601d`)
 
 ### 🔍 对李兆杰需求分配的核验结论（B 的输入）
 - ✅ 框架合理(重力+POI)、β=0.04 正常、中心滨海(Castel dell'Ovo)+Napoli Centrale+Bagnoli 覆盖到位
@@ -168,11 +169,11 @@
 - 🔴 他的分配**无分时段** → B 必须自己补高峰小时系数；外部 30万 是纯 POI 权重(无距离)，对走廊负荷指示性弱
 
 ### 📌 下一步起点（明天 06-02）
-**Part B 全部完成 + QA 通过**（2脚本+4图+方法论+答辩+docx+pptx，内部全一致）。明天要做：
+**Part B 全部完成 + QA 通过 + 总览图地理化**（4脚本+docx内嵌5图+方法论+答辩+docx+pptx，内部全一致）。明天要做：
 1. **用户仔细看报告 + 问问题** —— 用户会逐段审 `PartB_section.docx`/`B_methodology_results.md`，可能就方法/数字/措辞提问，按需调整
 2. **导入 Visum** —— 用户拿 `B_zone_metrics.csv`（NO/AREA_ID/tourist_in/background_in/growth_pct/access_min）导进 Visum，按 area_id join 到 zone 层做精细面状图。⚠️ 着色用**绝对量(tourist_in)**别用 growth_pct(低基数农村区会假高)
 3. （仍可选）把 `PartB_section.docx` 内容并进小组 report；找李兆杰确认矩阵单位=月
-- ✅ **06-01 收尾**：Part B 完整化 + QA 修正全部 commit&push 到 GitHub（最新 `d5cff37`）。
+- ✅ **06-01 收尾**：Part B 完整化 + QA 修正 + 总览图地理化全部 commit&push 到 GitHub（最新 `a2b0aba`）。
 
 ## 工作习惯
 
