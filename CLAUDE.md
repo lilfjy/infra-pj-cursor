@@ -164,7 +164,9 @@
 - [x] **B Part 完整化（06-01）**：+OSRM 可达性维度(图4)+敏感性图(图3)+英文方法论文档+答辩话术 → Part B 现为 2脚本+4图+2文档
 - [x] **QA 修正（06-01）**：LOS 近满载阈值统一为 **0.80**(故 L1 0.84=E 与文档一致)；VC柱状图 L1 改橙色+状态色图例；docx/pptx 换用面状图并重嵌新柱状图；方法论 .md 图引用改面状图+加 growth%噪声说明
 - [x] **总览图地理化升级（06-01，commit `a2b0aba`）**：`B_map_venues_rail_schematic.png` 从空白散点底图 → **真实官方 Campania shapefile 分区边界**(浅蓝海湾背景+9个赛事区高亮)，叠赛场★/西部枢纽◆/4条轨道线(按event V/C上色)+V/C标注；标签独立偏移+引线(解决 L1/L6 共端点 14.240,40.836 重叠)；同步重嵌进 docx/pptx/方法论
-- [x] **🔴 Part B 重大重建（06-02）**：队友重做需求矩阵→旧 Tourist/TOTAL 弃用,换 `background_od`+`PROJECT`(净增量960万/+9.7%);确立 best-of-both 按日口径(增量÷20赛事日);弃用被本底污染的 event/non_event 日矩阵;按坐标修正分区语义(火车站=zone79,zone1=Centro Direzionale)并入 V/C。**新结果 L1 0.71→0.91**(60%破1.09,走廊级1.20),L2 0.70/L6 0.65/Cumana 0.51。**全部5脚本+6图+方法论+答辩+docx(5图)+pptx 已用订正数据重建,内部一致**（详见「数据订正」+「⭐B分析结果」节）
+- [x] **🔴 Part B 重大重建（06-02，commit `f4decb7`）**：队友重做需求矩阵→旧 Tourist/TOTAL 弃用,换 `background_od`+`PROJECT`(净增量960万/+9.7%);确立 best-of-both 按日口径(增量÷20赛事日);弃用被本底污染的 event/non_event 日矩阵;按坐标修正分区语义(火车站=zone79,zone1=Centro Direzionale)并入 V/C。**新结果 L1 0.71→0.91**(60%破1.09,走廊级1.20),L2 0.70/L6 0.65/Cumana 0.51。**全部5脚本+方法论+答辩+docx+pptx 已用订正数据重建,内部一致**（详见「数据订正」+「⭐B分析结果」节）
+- [x] **全 shapefile 化 + 清理（06-02）**：所有地图改用真实 Campania shapefile(零散点);删旧 Part A 图 chart1-6 + 冗余/散点图 + 做错的旧矩阵;可达性图最终定为**干净车程面状图**(去掉游客来源圆圈,否则看着像散点)→ docx Fig5/slide2 由用户手动粘新图
+- [x] **答辩问答梳理（06-02）**：给用户讲清 OSRM 工作流(纯Python+调OSRM外部引擎)、÷30.4(月→日)、50%(轨道分担率假设+敏感性兜底)、三锚点功能(火车站=入口/RaceVillage=人群/Bagnoli=赛场)、Visum 导入(`B_zone_metrics.csv` 按area_id join,**着色用tourist_in别用growth_pct**)、给李兆杰的增幅回复话术
 
 ### 🔍 对李兆杰需求分配的核验结论（B 的输入）
 - ✅ 框架合理(重力+POI)、β=0.04 正常、中心滨海(Castel dell'Ovo)+Napoli Centrale+Bagnoli 覆盖到位
@@ -173,13 +175,13 @@
 - ⚠️ **zone 73(Nocera, 30km外)是离群点** → 待问李兆杰为何选它
 - 🔴 他的分配**无分时段** → B 必须自己补高峰小时系数；外部 30万 是纯 POI 权重(无距离)，对走廊负荷指示性弱
 
-### 📌 下一步起点（06-02 重建后）
-**Part B 已用订正数据全面重建完成**（5脚本+6图+方法论+答辩+docx内嵌5图+pptx，内部全一致）。下一步：
-1. **用户审重建后的报告** —— 逐段审 `PartB_section.docx`/`B_methodology_results.md`,核对新数字(L1 0.91 等)
-2. **回复李兆杰增幅** —— 告诉他用 PROJECT−background 净增量(全区 +9.7%/9区赛事日 +25%/赛事日口径),日拆分矩阵已弃用
-3. **导入 Visum** —— 用 `B_zone_metrics.csv`(新列含 project_in)按 area_id join,⚠️ 着色用**绝对量 tourist_in**别用 growth_pct(低基数农村区假高)
-4. （仍可选）把 `PartB_section.docx` 并进小组 report
-- ⏳ **06-02 重建待 commit&push**（旧最新 commit `8495508`）
+### 📌 下一步起点（06-02 收工后）
+**Part B 全部完成并已上云**（5脚本 + 5图全shapefile + 方法论 + 答辩 + docx + pptx + zone_metrics.csv,内部全一致）。剩下都是用户侧操作:
+1. **发李兆杰增幅** —— 话术已写好(全区+9.7%/9区赛事日+25%,日拆分弃用),用户去发
+2. **导入 Visum** —— 用 `B_zone_metrics.csv` 按 area_id join,⚠️ 着色用**绝对量 tourist_in**别用 growth_pct(低基数农村区假高)→ 精细化饱和面状图
+3. **用户自己通读 report/slides** 备答辩(答辩问答口径已在「答辩问答梳理」条记录)
+4. （可选）把 `PartB_section.docx` 并进小组 `INFRA.docx`
+- ✅ **06-02 全部 commit&push 到 GitHub**(重建=`f4decb7`,可达性清理收尾见本次提交)
 
 ## 工作习惯
 

@@ -109,11 +109,6 @@ pc.set_array(np.array(vals)); pc.set_clim(0, 75)
 ax.add_collection(pc)
 cb = plt.colorbar(pc, ax=ax, shrink=0.8)
 cb.set_label("Driving time to nearest venue (min, OSRM real road network)")
-# 游客来源 比例符号(圆面积 ∝ 出发量) — 叠在真实面状图上, 体现"需求从哪来"
-zo = zc[zc["tour"] > 0]
-ax.scatter(zo["LON"], zo["LAT"], s=8 + zo["tour"] / 1200, facecolor="#21618C",
-           edgecolors="white", linewidths=0.4, alpha=0.55, zorder=3,
-           label="Tourist origin volume (∝ circle area)")
 # 场地星标
 for v in VENUE:
     g = z[z["NO"] == v].iloc[0]
@@ -126,9 +121,8 @@ ax.annotate("Race Village", (z[z.NO==3].iloc[0]["LON"], z[z.NO==3].iloc[0]["LAT"
 b = reader.bbox; ax.set_xlim(b[0], b[2]); ax.set_ylim(b[1], b[3])
 ax.set_aspect(1/np.cos(np.radians(40.8)))
 ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
-ax.legend(loc="lower right", fontsize=9, framealpha=0.95)
 ax.set_title("Road accessibility to America's Cup venues (OSRM, real road network)\n"
-             "Choropleth = drive time to nearest venue | circles ∝ tourist origin volume",
+             "Choropleth on real zone boundaries — drive time to nearest venue (green = near, red = far)",
              fontweight="bold")
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_map_accessibility_osrm.png"), dpi=150, bbox_inches="tight")
 plt.close()
