@@ -25,17 +25,19 @@ except Exception:
 ROOT = r"C:\Users\53592\Desktop\infrastructure PW"
 HERE = os.path.join(ROOT, "5.11 fjy")
 OUT = os.path.join(HERE, "output_charts")
-TOUR = os.path.join(ROOT, "Tourist_AGGREGATE.mtx")
-TOTAL = os.path.join(ROOT, "TOTAL_flow.mtx")
+BACKGROUND = os.path.join(ROOT, "background_od.mtx")                       # as-is 基线 (223)
+PROJECT = os.path.join(ROOT, "total_new_project_flow_internal_only.mtx")   # 事件场景 (222)
 ZONES = os.path.join(HERE, "Zones.csv")
 SHP = os.path.join(ROOT, "Project_Work_FSxPOLIMI_March2026 (1)",
                    "Project_Work_FSxPOLIMI_March2026", "Shapefile", "Campania.shp")
 
 DAYS_PER_MONTH = 30.4
+N_EVENT_DAYS = 20
 PEAK_HOUR_FRAC = 0.08
 TRANSIT_SHARE = 0.50
 CAP = {"L1": 12000, "L2": 3600, "L6": 7200, "Cumana": 1050}
 ZONE_LINES = {
+    79: ["L1", "L2"],   # Napoli Centrale 火车站枢纽
     1: ["L1", "L2"], 3: ["L1", "L6"], 71: ["L1"], 195: ["L1"], 216: ["L1", "L6"],
     2: ["L2", "L6", "Cumana"], 10: ["L2", "Cumana"], 33: ["L2", "L6", "Cumana"],
 }
@@ -54,43 +56,46 @@ RAIL_ROUTES = {
 }
 RAIL_COLORS = {"L1": "#C0392B", "L6": "#2980B9", "L2": "#27AE60", "Cumana": "#8E44AD"}
 # (no, label, lon, lat, (dx,dy) label offset in points)
+# 注: zone 1 是 Centro Direzionale(站西南), 火车站本体在 zone 79(站东); 星标放真实站点坐标
 VENUES = [
     (10, "Bagnoli\n(venue & tech zone)", 14.171, 40.826, (-6, 26)),
     (3, "Race Village\n(central waterfront)", 14.237, 40.837, (14, 30)),
-    (1, "Napoli Centrale\n(rail gateway +50%)", 14.267, 40.847, (10, 14)),
+    (79, "Napoli Centrale\n(L1+L2 rail hub)", 14.272, 40.853, (12, 14)),
 ]
 HUB = (2, "Fuorigrotta / Mostra\n(western interchange)", 14.199, 40.825, (24, -42))
 
 
-def parse_v(path, n=223):
-    toks, collect = [], False
+def parse_v(path):
+    """稳健 $V 解析: 读 n, 收集全部数字 token, 切片 [n:n+n*n]。"""
+    n = None; nxt = False; started = False; toks = []
     for line in open(path, encoding="utf-8", errors="ignore"):
         s = line.strip()
-        if s.startswith("* Network object numbers"):
-            collect = True
-            continue
-        if not collect:
+        if s.startswith("* Number of network objects"):
+            nxt = True; continue
+        if nxt and s and not s.startswith("*"):
+            n = int(s.split()[0]); nxt = False; started = True; continue
+        if not started:
             continue
         if s.startswith(("*", "$")) or s in ("-", ""):
             continue
-        toks += s.split()
-    nums = [float(x) for x in toks][n:]
-    return np.array(nums[: n * n]).reshape(n, n)
+        for tok in s.split():
+            try:
+                toks.append(float(tok))
+            except ValueError:
+                pass
+    return np.array(toks[n:n + n * n]).reshape(n, n)
 
 
-def inbound(mat, no):
-    return mat[:, no - 1].sum()
+def event_day(no, BG, SURGE):
+    """赛事日到达 = as-is 日(背景月/30.4) + 增量/20"""
+    return BG[:, no - 1].sum() / DAYS_PER_MONTH + SURGE[:, no - 1].sum() / N_EVENT_DAYS
 
 
-def peak_transit(monthly):
-    return monthly / DAYS_PER_MONTH * PEAK_HOUR_FRAC * TRANSIT_SHARE
-
-
-def event_vc_by_line(T, B):
+def event_vc_by_line(BG, SURGE):
     load_ev = {l: 0.0 for l in CAP}
     for no, lines in ZONE_LINES.items():
         capsum = sum(CAP[l] for l in lines)
-        d_ev = peak_transit(inbound(B, no) + inbound(T, no))
+        d_ev = event_day(no, BG, SURGE) * PEAK_HOUR_FRAC * TRANSIT_SHARE
         for l in lines:
             load_ev[l] += d_ev * (CAP[l] / capsum)
     return {l: load_ev[l] / CAP[l] for l in CAP}
@@ -106,10 +111,10 @@ def vc_style(vc):
     return "#27AE60", 3.0, "headroom"
 
 
-T = parse_v(TOUR)
-F = parse_v(TOTAL)
-B = F - T
-vc = event_vc_by_line(T, B)
+BG = parse_v(BACKGROUND)[:222, :222]
+PROJ = parse_v(PROJECT)
+SURGE = np.maximum(PROJ - BG, 0.0)
+vc = event_vc_by_line(BG, SURGE)
 
 # ── 底图：真实 shapefile 分区边界 ──
 # shapefile 记录顺序 == 分区 NO 顺序 (record i <-> NO i+1)
@@ -207,7 +212,7 @@ ax.text(
     0.02, 0.02,
     "Basemap: official Campania zone boundaries (shapefile, WGS84).\n"
     "Rail alignments schematic (major stations), not official track GIS.\n"
-    "V/C from Tourist_AGGREGATE + TOTAL_flow; capacity from published headways.",
+    "Demand: background_od + PROJECT event scenario; capacity from published headways.",
     transform=ax.transAxes, fontsize=7.5, color="#566573", va="bottom",
     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#D5D8DC", alpha=0.85),
 )

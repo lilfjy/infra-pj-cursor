@@ -23,29 +23,31 @@ HERE = os.path.join(ROOT, "5.11 fjy")
 OUT  = os.path.join(HERE, "output_charts")
 SHP  = os.path.join(ROOT, "Project_Work_FSxPOLIMI_March2026 (1)",
                     "Project_Work_FSxPOLIMI_March2026", "Shapefile", "Campania.shp")
-TOUR = os.path.join(ROOT, "Tourist_AGGREGATE.mtx")
-TOTAL= os.path.join(ROOT, "TOTAL_flow.mtx")
+BACKGROUND = os.path.join(ROOT, "background_od.mtx")                       # as-is 基线 (223)
+PROJECT    = os.path.join(ROOT, "total_new_project_flow_internal_only.mtx") # 事件场景 (222)
 DIST = os.path.join(HERE, "distance_real_v2.mtx")
 VENUE = [3, 10]   # NO; 3=中心RaceVillage 10=Bagnoli
 
 def parse_v(path):
-    toks=[];collect=False;n=None;nxt=False
+    """稳健 $V 解析: 兼容有/无 'Network object numbers' 行 + 尾部名块"""
+    n=None;nxt=False;st=False;toks=[]
     for line in open(path,encoding="utf-8",errors="ignore"):
         s=line.strip()
         if s.startswith("* Number of network objects"): nxt=True;continue
-        if nxt and s and not s.startswith("*"): n=int(s.split()[0]);nxt=False
-        if s.startswith("* Network object numbers"): collect=True;continue
-        if not collect: continue
+        if nxt and s and not s.startswith("*"): n=int(s.split()[0]);nxt=False;st=True;continue
+        if not st: continue
         if s.startswith(("*","$")) or s in ("-",""): continue
-        toks+=s.split()
-    nums=[float(x) for x in toks][n:]
-    return np.array(nums[:n*n]).reshape(n,n)
+        for tok in s.split():
+            try: toks.append(float(tok))
+            except ValueError: pass
+    return np.array(toks[n:n*n+n]).reshape(n,n)
 
-T=parse_v(TOUR); F=parse_v(TOTAL); B=F-T; D=parse_v(DIST)   # T,F,B:223  D:222
+BG=parse_v(BACKGROUND)[:222,:222]; PROJ=parse_v(PROJECT); D=parse_v(DIST)   # BG,PROJ:222  D:222
+SURGE=np.maximum(PROJ-BG,0.0)   # 美洲杯净增量
 
 # 各区(NO i+1, idx i, i=0..221) 指标
-tour_in=T[:, :222].sum(axis=0)          # 进入各Campania区的游客增量(列和)
-bg_in  =B[:, :222].sum(axis=0)
+tour_in=SURGE.sum(axis=0)               # 进入各Campania区的游客增量(列和; = PROJECT-background)
+bg_in  =BG.sum(axis=0)
 growth =np.where(bg_in>0, tour_in/bg_in*100, 0.0)      # 增长%
 acc=np.minimum(D[:, VENUE[0]-1], D[:, VENUE[1]-1])     # 到最近场地车程(min)
 for v in VENUE: acc[v-1]=0.0
@@ -94,11 +96,7 @@ vmaxA=float(np.percentile(tour_in,97))
 choropleth(np.clip(tour_in,0,vmaxA), "YlOrRd", 0, vmaxA,
            "America's Cup added demand — where the surge lands\n(tourist-arrival increment per zone, trips/month; red = highest absolute load)",
            "Tourist arrivals increment (trips/month)", "B_map_saturation_shapefile.png",
-           [(1,"Napoli Centrale\n(gateway, +50%)",6),(10,"Bagnoli venue",-14),(3,"Race Village",6)],
+           [(79,"Napoli Centrale\n(rail hub)",6),(1,"Centro Direzionale",-14),(10,"Bagnoli venue",-14),(3,"Race Village",6)],
            zoom=(14.05,14.45,40.75,40.95))
-# 图B: 路网可达性(全 Campania)
-choropleth(np.clip(acc,0,75), "RdYlGn_r", 0, 75,
-           "Road accessibility to America's Cup venues (OSRM real network)\n(driving minutes to nearest venue)",
-           "Drive time (min)", "B_map_accessibility_shapefile.png",
-           [(10,"Bagnoli",-14),(3,"Race Village",6)])
-print("Done. 面状图已生成 (可导入 Visum 精修)。")
+# 注: 可达性面状图改由 B_accessibility_osrm.py 生成(含游客来源叠加, 更丰富),此处不再重复出图
+print("Done. 饱和面状图已生成 (可导入 Visum 精修)。")

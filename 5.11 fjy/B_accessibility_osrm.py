@@ -8,9 +8,12 @@
 import os, sys
 import numpy as np
 import pandas as pd
+import shapefile
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPoly
+from matplotlib.collections import PatchCollection
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
@@ -20,27 +23,33 @@ ROOT = r"C:\Users\53592\Desktop\infrastructure PW"
 HERE = os.path.join(ROOT, "5.11 fjy")
 OUT  = os.path.join(HERE, "output_charts")
 DIST = os.path.join(HERE, "distance_real_v2.mtx")   # 完整版(v1残缺,勿用); 单位=分钟
-TOUR = os.path.join(ROOT, "Tourist_AGGREGATE.mtx")
+BACKGROUND = os.path.join(ROOT, "background_od.mtx")                       # as-is 基线 (223)
+PROJECT    = os.path.join(ROOT, "total_new_project_flow_internal_only.mtx") # 事件场景 (222)
 ZONES = os.path.join(HERE, "Zones.csv")
+SHP = os.path.join(ROOT, "Project_Work_FSxPOLIMI_March2026 (1)",
+                   "Project_Work_FSxPOLIMI_March2026", "Shapefile", "Campania.shp")
 
 VENUE = [3, 10]   # 赛事场地参考区: 3=中心Race Village, 10=Bagnoli技术区; 取到最近场地的时间
 BANDS = [15, 30, 45, 60]   # 等时圈分钟
 
 def parse_v(path):
-    toks=[];collect=False;n=None;nxt=False
+    """稳健 $V 解析: 兼容有/无 'Network object numbers' 行 + 尾部名块"""
+    n=None;nxt=False;st=False;toks=[]
     for line in open(path,encoding="utf-8",errors="ignore"):
         s=line.strip()
         if s.startswith("* Number of network objects"): nxt=True;continue
-        if nxt and s and not s.startswith("*"): n=int(s.split()[0]);nxt=False
-        if s.startswith("* Network object numbers"): collect=True;continue
-        if not collect: continue
+        if nxt and s and not s.startswith("*"): n=int(s.split()[0]);nxt=False;st=True;continue
+        if not st: continue
         if s.startswith(("*","$")) or s in ("-",""): continue
-        toks+=s.split()
-    nums=[float(x) for x in toks][n:]
-    return np.array(nums[:n*n]).reshape(n,n),n
+        for tok in s.split():
+            try: toks.append(float(tok))
+            except ValueError: pass
+    return np.array(toks[n:n*n+n]).reshape(n,n),n
 
-D, nD = parse_v(DIST)          # 222 (Campania)
-T, nT = parse_v(TOUR)          # 223 (含 Italia)
+D, nD = parse_v(DIST)                       # 222 (Campania)
+BG = parse_v(BACKGROUND)[0][:222, :222]     # 222 内部块
+PROJ = parse_v(PROJECT)[0]                  # 222
+SURGE = np.maximum(PROJ - BG, 0.0)          # 美洲杯净增量
 z = pd.read_csv(ZONES)
 name = dict(zip(z["NO"], z["ZONE_NAME"].fillna("?")))
 
@@ -49,8 +58,8 @@ acc = np.minimum.reduce([D[:, v-1] for v in VENUE])   # len 222
 # 自身=场地的设为 0
 for v in VENUE: acc[v-1] = 0.0
 
-# 每区作为"游客出发地"的量 = Tourist 行和 (只取 Campania 222 区)
-tour_origin = T[:222, :].sum(axis=1)   # len 222
+# 每区作为"游客出发地"的量 = 美洲杯增量行和 (Campania 内 222 区)
+tour_origin = SURGE.sum(axis=1)   # len 222
 
 # 有效区: 有坐标 + 有可达性(>0 或本身是场地)
 zc = z[z["NO"].between(1, 222)].copy().dropna(subset=["LAT", "LON"])
@@ -80,27 +89,48 @@ print(f"\n游客需求加权平均车程: {wmean:.0f} 分钟")
 within45 = zc[zc["acc"]<=45]["tour"].sum()/tot_tour_camp*100
 print(f"45分钟车程内的游客需求占比: {within45:.0f}%")
 
-# ── 可达性等时圈地图 ───────────────────────────────────
+# ── 可达性地图 (真实 shapefile 面状底图 + 游客来源比例符号) ─────────────
+def rings(shape):
+    pts = shape.points; parts = list(shape.parts) + [len(pts)]
+    return [pts[parts[k]:parts[k+1]] for k in range(len(parts)-1)]
+
+reader = shapefile.Reader(SHP)
+shapes = reader.shapes()              # 222, 记录顺序=NO
+
 fig, ax = plt.subplots(figsize=(9.5, 8.5))
-sc = ax.scatter(zc["LON"], zc["LAT"], c=zc["acc"], s=40+zc["tour"]/600,
-                cmap="RdYlGn_r", vmin=0, vmax=75, alpha=0.85,
-                edgecolors="k", linewidths=0.4, zorder=2)
-cb = plt.colorbar(sc, ax=ax, shrink=0.8)
+ax.set_facecolor("#D6EAF8")           # 海面 = 浅蓝
+# 面状: 各区按到最近场地车程上色
+patches, vals = [], []
+for i, sh in enumerate(shapes):
+    for ring in rings(sh):
+        patches.append(MplPoly(ring, closed=True)); vals.append(acc[i])
+pc = PatchCollection(patches, cmap="RdYlGn_r", edgecolor="white", linewidths=0.3, zorder=1)
+pc.set_array(np.array(vals)); pc.set_clim(0, 75)
+ax.add_collection(pc)
+cb = plt.colorbar(pc, ax=ax, shrink=0.8)
 cb.set_label("Driving time to nearest venue (min, OSRM real road network)")
-# 标场地
+# 游客来源 比例符号(圆面积 ∝ 出发量) — 叠在真实面状图上, 体现"需求从哪来"
+zo = zc[zc["tour"] > 0]
+ax.scatter(zo["LON"], zo["LAT"], s=8 + zo["tour"] / 1200, facecolor="#21618C",
+           edgecolors="white", linewidths=0.4, alpha=0.55, zorder=3,
+           label="Tourist origin volume (∝ circle area)")
+# 场地星标
 for v in VENUE:
-    g = z[z["NO"]==v].iloc[0]
-    ax.scatter(g["LON"], g["LAT"], marker="*", s=420, c="#1A5276",
-               edgecolors="white", linewidths=1.2, zorder=5)
+    g = z[z["NO"] == v].iloc[0]
+    ax.plot(g["LON"], g["LAT"], marker="*", ms=22, c="#1A5276",
+            mec="white", mew=1.3, zorder=6)
 ax.annotate("Bagnoli venue", (z[z.NO==10].iloc[0]["LON"], z[z.NO==10].iloc[0]["LAT"]),
-            xytext=(6,6), textcoords="offset points", fontsize=9, fontweight="bold")
-ax.annotate("Central Race Village", (z[z.NO==3].iloc[0]["LON"], z[z.NO==3].iloc[0]["LAT"]),
-            xytext=(6,-12), textcoords="offset points", fontsize=9, fontweight="bold")
+            xytext=(6,6), textcoords="offset points", fontsize=9, fontweight="bold", zorder=7)
+ax.annotate("Race Village", (z[z.NO==3].iloc[0]["LON"], z[z.NO==3].iloc[0]["LAT"]),
+            xytext=(6,-12), textcoords="offset points", fontsize=9, fontweight="bold", zorder=7)
+b = reader.bbox; ax.set_xlim(b[0], b[2]); ax.set_ylim(b[1], b[3])
+ax.set_aspect(1/np.cos(np.radians(40.8)))
 ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
-ax.set_title("Road accessibility to America's Cup venues (OSRM)\n"
-             "Color = drive time to nearest venue | bubble size ∝ tourist origin volume",
+ax.legend(loc="lower right", fontsize=9, framealpha=0.95)
+ax.set_title("Road accessibility to America's Cup venues (OSRM, real road network)\n"
+             "Choropleth = drive time to nearest venue | circles ∝ tourist origin volume",
              fontweight="bold")
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "B_map_accessibility_osrm.png"), dpi=150, bbox_inches="tight")
 plt.close()
-print(f"\n  ✓ 图4 saved: output_charts/B_map_accessibility_osrm.png")
+print(f"\n  ✓ 图4 saved: output_charts/B_map_accessibility_osrm.png (shapefile 面状版)")
 print("\n注: 仅含 Campania 内出发的游客; 外部(意大利其余/国际)经长途铁路/高速/航空抵达, 不在此路网矩阵内。")

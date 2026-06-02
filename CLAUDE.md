@@ -31,13 +31,8 @@
 
 ## 输出结果
 
-`5.11 fjy/output_charts/` 包含以下分析图：
-1. `chart1_top_destinations.png` — 热门目的地 Top N
-2. `chart2_day_of_week.png` — 按星期几分布
-3. `chart3_time_slots.png` — 按时间段分布
-4. `chart4_transport_mode.png` — 交通方式分布
-5. `chart5_nationality.png` — 国籍分布
-6. `chart6_inbound_italy.png` — 入境意大利流量
+`5.11 fjy/output_charts/` 现含 **Part B 的 5 张图**(逐线V/C/敏感性/总览/饱和/可达性,详见「全部产出」节)。
+> ⚠️ 早期 6 张 Part A 基础探索图(`chart1-6`,由 `analysis.py` 生成)已于 06-02 删除(被 Part B 取代,需要可重跑 `analysis.py` 再生)。
 
 ## 项目真实要求（来自官方 PDF）
 
@@ -98,7 +93,8 @@
 
 **待确认的关键假设**（决定崩溃结论）：① 高峰小时系数(现状早高峰 05-09 占 22%) ② **轨道分担率默认 50%**(可做 40/50/60 敏感性) ③ 阈值 V/C>1.0 + LOS 分级
 
-### 李兆杰给的需求矩阵（B 的输入，已解析 05-31）
+### ⛔ 李兆杰给的需求矩阵（B 的输入，已解析 05-31）—— 🔴 此节已作废,见下方「数据订正」
+> **以下 `Tourist_AGGREGATE`/`TOTAL_flow` 及其增幅(+11%/+20.6%/zone1+50%)队友 06-02 确认做错,文件已删。** 现用 `background_od`+`PROJECT`,增幅见「数据订正」节(全区+9.7%/9区赛事日+25%)。保留本节仅作历史推理记录。
 - 文件（根目录，Visum `$V` 格式 223×223，含 Italia 聚合区）：
   - `Tourist_AGGREGATE.mtx` = 纯游客增量（5 个游客矩阵之和，无重力模型）
   - `TOTAL_flow.mtx` = 游客 + 背景基流；**背景 = TOTAL − Tourist**
@@ -112,38 +108,46 @@
 1. **矩阵单位是"月"吗？**（背景 98.8M ≈ As-is 月度量级；做 V/C 要 月→日→高峰小时，必须先确认）
 2. **他说的"40%"具体指哪些区？**（确认是 zone1 峰值，还是另有"核心旅游区"定义）
 
-### ⭐ B 分析结果（已跑通 05-31）—— 脚本 `5.11 fjy/B_capacity_analysis.py`
-默认假设：高峰小时=**8%/日**（As-is 早高峰 21.8%/4h≈5.5% ×峰内系数~1.4）｜轨道分担=**50%**｜30.4天/月
+### 🔴 数据订正（2026-06-02 队友重做矩阵 → Part B 已重建）
+**旧的 `Tourist_AGGREGATE` / `TOTAL_flow` 队友确认做错,弃用。** 订正后用:
+- `background_od.mtx`(223, as-is 基线 **98.85M**) + `total_new_project_flow_internal_only.mtx`(222, 事件场景 PROJECT **108.45M**)
+- **美洲杯净增量 = PROJECT − background = 960万(+9.7%)**（这是唯一可靠的赛事增量口径）
+- 验证恒等式: `PROJECT = event + non_event − background`(逐格精确)→ event/non_event 两个日矩阵**各含一份背景**,直接加会重复算背景
+- ⚠️ **event/non_event 日拆分矩阵弃用**:其 +91%/日 含 ~80% 本底"忙日/闲日"波动(隐含 4800万≈真实增量5倍),直接用会高估饱和度~5倍
+- **分区语义修正**(按 Zones.csv 坐标核对):**火车站=zone 79**(站东,L1+L2),不是 zone1(zone1=Centro Direzionale,+74%);机场=191,火山=212(Ercolano),庞贝=68——191/212/68 在 Alibus/Circumvesuviana 另一张网,不进地铁 V/C(文字提及)
 
-**口径1 走廊级**：West(赛场 Cumana+L2+L6) V/C 0.33→**0.35 🟢富余**；Central(滨海+门户, 仅算L1) 0.89→**1.09 🔴崩溃**
-**口径2 逐线路**（各区需求按运力比例分摊，更严谨、避开走廊归属争议）：
-- **L1 现状 0.69 → 赛事 0.84**（逼近满载；60% 分担率时破 1.01🔴）← **单条最受压的线，binding constraint**
-- L6 0.62 ｜ L2 0.62 ｜ Cumana 0.50（均有余量）
+### ⭐ B 分析结果（已重建 06-02）—— 脚本 `5.11 fjy/B_capacity_analysis.py`
+需求口径 **best-of-both 按日**:as-is日=背景月/30.4 ｜ 赛事日=as-is日+增量/**20赛事日**（÷60为保守下界）
+假设：高峰小时=**8%/日** ｜ 轨道分担=**50%**（敏感性40/50/60）｜ 9区赛事日增幅 **+25%**
 
-**🎯 核心结论（答辩主线）**：瓶颈**不在赛场**——Bagnoli/Fuorigrotta 有 3 条线富余(V/C~0.35~0.62)；问题是**运力分布错位**，集中在 **L1 中心主干 + Napoli Centrale 门户**。即"**distribution 问题，非 capacity 问题**"→ 对策=L1 加密班次 + 用 L6(Municipio↔Mostra)分流，而非修新线（顺接 Step 3）。
-**诚实caveat**：绝对 V/C 依赖分担率/高峰假设；"崩溃"在 50% 分担率下是 L1≈0.84(临界)、60% 才破1.0。稳健说法="L1 是 binding constraint，已无冗余"，而非"全面崩溃"。
+**口径2 逐线路**（各区需求按运力比例分摊；含新增 zone79 火车站枢纽）：
+- **L1 现状 0.71 → 赛事日 0.91**（几乎满载；60% 分担率破 1.09🔴；走廊级中心全压L1=1.20）← **binding constraint**
+- L2 0.70 ｜ L6 0.65 ｜ Cumana 0.51（均有余量）
+
+**🎯 核心结论（答辩主线，不变且更强）**：瓶颈**不在赛场**——Bagnoli/Fuorigrotta 有 3 条线富余(V/C~0.51~0.70)；问题是**运力分布错位**，集中在 **L1 中心主干 + Napoli Centrale 火车站枢纽(zone79)**。即"**distribution 问题，非 capacity 问题**"→ 对策=L1 加密 + L6 分流。
+**诚实caveat**：50% 分担率下 L1=0.91(临界、无冗余)、60% 才破1.0。稳健说法="L1 是 binding constraint，已无余量"。
 
 **B 的第二维度 — OSRM 真实路网可达性**（脚本 `B_accessibility_osrm.py`）：
 - ⚠️ **用 `distance_real_v2.mtx`（完整 222×222，单位=分钟）**；`distance_real.mtx`(v1) **残缺只算了 22/222 起点，勿用**
-- 算各区到最近赛场(zone 3/10)的开车分钟 → 等时圈地图 + 游客来源叠加
-- 发现：**73% 的(Campania内)游客需求在 45 分钟车程内**(加权均 37min)→ 那不勒斯中心集中，印证 L1 走廊压力；**~20% 来自 >60min 远郊**(Salerno/Cilento)，靠长途公路+区域铁路
+- 算各区到最近赛场(zone 3/10)的开车分钟 → 等时圈地图 + 游客来源(=surge行和)叠加
+- 发现：**71% 的(Campania内)游客需求在 45 分钟车程内**(加权均 41min)→ 那不勒斯中心集中，印证 L1 走廊压力；**~21% 来自 >60min 远郊**(Salerno/Cilento)，靠长途公路+区域铁路
 
-**全部产出**（`5.11 fjy/`）：
-- 脚本：`B_capacity_analysis.py`(容量V/C) + `B_accessibility_osrm.py`(可达性)
-- 4 图(`output_charts/`，英文可直接进 report)：`B_chart_VC_by_line.png`(逐线V/C柱状) · `B_map_saturation.png`(饱和地图) · `B_chart_sensitivity.png`(40/50/60%敏感性折线，L1 在60%穿1.0) · `B_map_accessibility_osrm.png`(可达性等时圈地图)
+**全部产出**（`5.11 fjy/`，均已用订正数据重建 06-02）：
+- 脚本：`B_capacity_analysis.py`(容量V/C) + `B_accessibility_osrm.py`(可达性) + `B_maps_shapefile.py`(面状图) + `B_map_rail_venues.py`(总览图) + `B_export_metrics.py`(Visum桥梁CSV)
+- 图(`output_charts/`，英文可直接进 report,**全部 shapefile 真实地图,无散点**)：`B_chart_VC_by_line.png`(逐线V/C柱状) · `B_chart_sensitivity.png`(40/50/60%敏感性，L1在60%破1.09) · `B_map_venues_rail_schematic.png`(总览主图) · `B_map_saturation_shapefile.png`(饱和面状) · `B_map_accessibility_osrm.png`(可达性面状+游客来源)
 - 文字：`B_methodology_results.md`(英文方法论+结论，可直接进report) + `B_答辩话术.md`(答辩Q&A，含教授追问标准答法)
-- **可合并文档**：`PartB_section.docx`(带格式+内嵌4图，进 INFRA.docx) + `PartB_slides.pptx`(3页16:9，含演讲备注=话术)
+- **可合并文档**：`PartB_section.docx`(带格式+内嵌5图，进 INFRA.docx) + `PartB_slides.pptx`(3页16:9，含演讲备注=话术)
 - **面状图(shapefile choropleth，比散点专业，脚本 `B_maps_shapefile.py`)**：
   - **`B_map_venues_rail_schematic.png`**（报告主图：赛场★ + L1/L2/L6/Cumana 示意线 + 各线 Event V/C 标注）
-  - `B_map_saturation_shapefile.png`(按**绝对游客到达增量**上色，中心区深红) · `B_map_accessibility_shapefile.png`(路网车程渐变)
+  - `B_map_saturation_shapefile.png`(按**绝对游客到达增量**上色，中心区深红) · 可达性面状图改由 `B_accessibility_osrm.py` 出(`B_map_accessibility_osrm.png`,车程渐变+游客来源叠加；旧的纯车程版 `B_map_accessibility_shapefile.png` 06-02 已删)
   - shapefile 在 `Project_Work.../Shapefile/Campania.shp`(222区,WGS84,**记录顺序=分区NO顺序**,area_id 直接对位)
   - ⚠️ **数据质量发现**：按"增长%"上色会被**低基数农村区**(如 Greci +1031%)污染成假热点 → 改用**绝对增量**才诚实；真正瓶颈=中心高量区(+25~50%)。答辩可主动提这点。
-  - **Visum 桥梁**：`B_zone_metrics.csv`(NO/AREA_ID/tourist_in/background_in/growth_pct/access_min) → 导入 Visum 按 area_id join 到 zone 层即可上色精修
+  - **Visum 桥梁**：`B_zone_metrics.csv`(NO/AREA_ID/ZONE_NAME/background_in/tourist_in/project_in/growth_pct/access_min,脚本 `B_export_metrics.py`重生成) → 导入 Visum 按 area_id join 到 zone 层即可上色精修
 - **分工边界**：B 只做"诊断"(哪堵/为何堵)；"开方"(增 shuttle bus)是苏艳婷的 Services improvement 部分
 
 ## 当前进度
 
-> 📅 **最后更新：2026-06-01**
+> 📅 **最后更新：2026-06-02**
 
 ### ✅ 已完成
 - [x] 项目初始化，数据文件整理
@@ -159,7 +163,8 @@
 - [x] **B 分析跑通**：补入 zone 2/33；走廊级+逐线路两套 V/C；出 2 张图；核心结论=L1 binding constraint（详见「⭐ B 分析结果」节）
 - [x] **B Part 完整化（06-01）**：+OSRM 可达性维度(图4)+敏感性图(图3)+英文方法论文档+答辩话术 → Part B 现为 2脚本+4图+2文档
 - [x] **QA 修正（06-01）**：LOS 近满载阈值统一为 **0.80**(故 L1 0.84=E 与文档一致)；VC柱状图 L1 改橙色+状态色图例；docx/pptx 换用面状图并重嵌新柱状图；方法论 .md 图引用改面状图+加 growth%噪声说明
-- [x] **总览图地理化升级（06-01，commit `a2b0aba`）**：`B_map_venues_rail_schematic.png` 从空白散点底图 → **真实官方 Campania shapefile 分区边界**(浅蓝海湾背景+9个赛事区高亮)，叠赛场★/西部枢纽◆/4条轨道线(按event V/C上色)+V/C标注；标签独立偏移+引线(解决 L1/L6 共端点 14.240,40.836 重叠)；同步重嵌进 `PartB_section.docx`(Results 首图 Fig.1，原4图顺延 Fig.2-5)+`PartB_slides.pptx`(slide0 替换原V/C柱状图)+`B_methodology_results.md`(Results 开头加 Spatial overview 引用)。三处图片 hash 校验一致(`534b97601d`)
+- [x] **总览图地理化升级（06-01，commit `a2b0aba`）**：`B_map_venues_rail_schematic.png` 从空白散点底图 → **真实官方 Campania shapefile 分区边界**(浅蓝海湾背景+9个赛事区高亮)，叠赛场★/西部枢纽◆/4条轨道线(按event V/C上色)+V/C标注；标签独立偏移+引线(解决 L1/L6 共端点 14.240,40.836 重叠)；同步重嵌进 docx/pptx/方法论
+- [x] **🔴 Part B 重大重建（06-02）**：队友重做需求矩阵→旧 Tourist/TOTAL 弃用,换 `background_od`+`PROJECT`(净增量960万/+9.7%);确立 best-of-both 按日口径(增量÷20赛事日);弃用被本底污染的 event/non_event 日矩阵;按坐标修正分区语义(火车站=zone79,zone1=Centro Direzionale)并入 V/C。**新结果 L1 0.71→0.91**(60%破1.09,走廊级1.20),L2 0.70/L6 0.65/Cumana 0.51。**全部5脚本+6图+方法论+答辩+docx(5图)+pptx 已用订正数据重建,内部一致**（详见「数据订正」+「⭐B分析结果」节）
 
 ### 🔍 对李兆杰需求分配的核验结论（B 的输入）
 - ✅ 框架合理(重力+POI)、β=0.04 正常、中心滨海(Castel dell'Ovo)+Napoli Centrale+Bagnoli 覆盖到位
@@ -168,12 +173,13 @@
 - ⚠️ **zone 73(Nocera, 30km外)是离群点** → 待问李兆杰为何选它
 - 🔴 他的分配**无分时段** → B 必须自己补高峰小时系数；外部 30万 是纯 POI 权重(无距离)，对走廊负荷指示性弱
 
-### 📌 下一步起点（明天 06-02）
-**Part B 全部完成 + QA 通过 + 总览图地理化**（4脚本+docx内嵌5图+方法论+答辩+docx+pptx，内部全一致）。明天要做：
-1. **用户仔细看报告 + 问问题** —— 用户会逐段审 `PartB_section.docx`/`B_methodology_results.md`，可能就方法/数字/措辞提问，按需调整
-2. **导入 Visum** —— 用户拿 `B_zone_metrics.csv`（NO/AREA_ID/tourist_in/background_in/growth_pct/access_min）导进 Visum，按 area_id join 到 zone 层做精细面状图。⚠️ 着色用**绝对量(tourist_in)**别用 growth_pct(低基数农村区会假高)
-3. （仍可选）把 `PartB_section.docx` 内容并进小组 report；找李兆杰确认矩阵单位=月
-- ✅ **06-01 收尾**：Part B 完整化 + QA 修正 + 总览图地理化全部 commit&push 到 GitHub（最新 `a2b0aba`）。
+### 📌 下一步起点（06-02 重建后）
+**Part B 已用订正数据全面重建完成**（5脚本+6图+方法论+答辩+docx内嵌5图+pptx，内部全一致）。下一步：
+1. **用户审重建后的报告** —— 逐段审 `PartB_section.docx`/`B_methodology_results.md`,核对新数字(L1 0.91 等)
+2. **回复李兆杰增幅** —— 告诉他用 PROJECT−background 净增量(全区 +9.7%/9区赛事日 +25%/赛事日口径),日拆分矩阵已弃用
+3. **导入 Visum** —— 用 `B_zone_metrics.csv`(新列含 project_in)按 area_id join,⚠️ 着色用**绝对量 tourist_in**别用 growth_pct(低基数农村区假高)
+4. （仍可选）把 `PartB_section.docx` 并进小组 report
+- ⏳ **06-02 重建待 commit&push**（旧最新 commit `8495508`）
 
 ## 工作习惯
 
