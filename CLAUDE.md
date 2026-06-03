@@ -182,16 +182,19 @@
 - ⚠️ 李表内部矛盾:他"总和"列对 City/Hub/Tourist 三类**比赛事日和非赛事日都高**(数学上不可能),建议他核对(20/40天归一老问题)。
 - **决定**:`PartB_section.docx` **移除会打架的显示数字**——p9 绝对总量(98.8M/108.4M,差李2倍)+ p10 逐区%（25/45/74/30/16）,**只留 +9.7%(铁对得上)+ 所有V/C(你独有不冲突)**。替换文字已给用户,待用户粘(docx 现为用户手改的 prose 版)。
 
-### 🗺️ Visum 教程 + 重画（06-03）
-- `《教程》.docx`(根目录):手把手用 PTV Visum 精细化总览图,含"第0步:先查Lines列表有没有线路"→ 有则直接上色/无则 OSM 导入(方案A/B/C/D)+ 附录(V/C值/赛场坐标/赛事区NO)。
-- 用户在尝试 Visum 重画 `B_map_venues_rail_schematic.png`,**卡在第1步**(查工程 Lines 列表是否已有 L1/L2 等线路)→ 下次接着带。
-- 📌 官方 PDF(DataDeliveryGuide)**不要求用 Visum 或任何指定软件**;Python 方案完全合规。Visum 版纯加分项。⚠️ 用户**没有 Visum license**,真要做建议让李兆杰代做(他有,出图风格见他的 Origin Zones 图)。
+### 🗺️ Visum 实操尝试 → 🔴 training版死路（06-03 晚）
+- `《教程》.docx`:手把手用 Visum 精细化总览图(含查Lines/OSM导入/上色/导出/附录V/C值)。⚠️ 用户后来本地删了该文件(git 里还有,需要可 checkout)。
+- **用户亲自试了 Visum,结论=training 版做不了**:
+  - 新建空工程 → 导 `Campania.shp` 报错。先撞 **multipart**(222区里25个多部分,含 Bagnoli 5018)被 Areas 导入拒 → 我生成 `5.11 fjy/Campania_singlepart.shp`(255单环块,填18洞,area_id保留)绕过。
+  - 再撞**硬墙**:报错 "maximum network size **(1000 m)** licensed for this version" → **training 版把网络范围锁死在 1km,Campania 横跨150km 一个区都插不进** → **training 版根本装不下任何真实区域,无解**。
+- **决定:路网图(`B_map_venues_rail_schematic`)交给李兆杰用完整版做**。给李的料:`B_zone_metrics.csv`(tourist_in上色)+参考PNG+V/C值(L1=0.91/L2=0.70/L6=0.65/Cumana=0.51)+赛场zone(10/3/79)。⚠️ 需李工程有 L1/L2/L6/Cumana 线路,没有则他 OSM 导。消息话术 AI 已给。
+- 📌 官方 PDF **不要求 Visum**;Python 方案合规,现成 `B_map_venues_rail_schematic.png` 报告可直接用(无水印)。Visum 版纯加分。
 
-### 📌 下一步起点（06-03 收工后）
-1. **PartB_section.docx 改 p9/p10**:移除绝对总量+逐区%,只留 +9.7%(替换文字 AI 已给,用户粘) → 和李铁对得上、不穿帮、自己V/C逻辑不破。
-2. **Visum 重画**:接着第1步(查 Lines 列表),有线→上色,无线→OSM 导入。或直接让李代做。
-3. **发李增幅 + 通读 report/slides 备答辩**(口径见「答辩问答梳理」)。
-- ✅ **历史 commit**:重建=`f4decb7`,可达性清理=`519a014`。
+### 📌 下一步起点（06-03 晚 收工后）
+1. **PartB_section.docx 改 p9/p10**:移除绝对总量(98.8M/108.4M,差李2倍)+逐区%(45/74/30/25),只留 +9.7%(替换文字 AI 已给,用户粘) → 和李一致不穿帮。
+2. **发李做 Visum 路网图**(话术已给)+ 发李增幅口径说明。
+3. **通读 report/slides 备答辩**(口径见「答辩问答梳理」)。
+- ✅ **历史 commit**:重建=`f4decb7`,可达性清理=`519a014`,教程+一致性=`52f758f`。
 
 ## 工作习惯
 
